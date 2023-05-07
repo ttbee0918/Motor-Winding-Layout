@@ -1,11 +1,12 @@
 import numpy as np
 S = 15
 P = 4
+Phase_Num = 3   # phase number\
 
-Nph = S/3
+Nph = S/Phase_Num
 Span = np.floor(S/P)
 E_angle = 180*P/S
-Ncpp = S/P/3
+Ncpp = S/P/Phase_Num
 
 # Initialization
 A = np.zeros((4,S))
@@ -15,8 +16,8 @@ A[2,:] = np.arange(1,S+1).reshape(-1,1).ravel()
 A[3,:] = np.arange(1+Span,S+1+Span).reshape(-1,1).ravel()
 
 for i in range(len(A[3,:])):
-    if A[3,i] > 15:
-        A[3,i] -= 15
+    if A[3,i] > S:
+        A[3,i] -= S
 
 # rerange 180 ~ -180
 A[1,:] = np.mod(A[1,:]+180,360)-180
@@ -33,4 +34,13 @@ for i in range(len(A[0,:])):
        A[2,i] = A[3,i]
        A[3,i] = A[0,i]
 
+# Sort the 1 column
+A = A[:,np.argsort(np.abs(A[1]),kind='mergesort')]
+
+# Take the phase A
+B = int(S/Phase_Num)
+A = A[:,:B]
+
 print(A)
+
+# Calculate K0
