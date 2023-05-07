@@ -44,3 +44,12 @@ A = A[:,:B]
 print(A)
 
 # Calculate K0
+K0 = np.zeros(int(S/2))
+for q in range(int(S/2)):
+    K0[q] = 2*S/3/P*(1+3*q)
+
+print(K0)
+
+K0 = [int(x) for x in np.nditer(K0) if float(x).is_integer()]
+
+print(K0)
