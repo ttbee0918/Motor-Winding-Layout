@@ -1,12 +1,12 @@
 import numpy as np
-S = 15
-P = 4
-Phase_Num = 3   # phase number\
+S = 15                  # Slots number
+P = 4                   # Pole number
+Phase_Num = 3           # Phase number
 
-Nph = S/Phase_Num
-Span = np.floor(S/P)
-E_angle = 180*P/S
-Ncpp = S/P/Phase_Num
+Nph = int(S/Phase_Num)  # Slots per phase
+Span = np.floor(S/P)    # Coil span
+E_angle = 180*P/S       # Electrical angle per slot
+Ncpp = S/P/Phase_Num    # Slots per phase per pole
 
 # Initialization
 A = np.zeros((4,S))
@@ -38,18 +38,46 @@ for i in range(len(A[0,:])):
 A = A[:,np.argsort(np.abs(A[1]),kind='mergesort')]
 
 # Take the phase A
-B = int(S/Phase_Num)
-A = A[:,:B]
+A = A[:,:Nph].astype(int)
 
 print(A)
+
+# Winding A
+W = np.empty((S,3), dtype=object)
+W[A[2,:]-1,0] = 'In'
+W[A[3,:]-1,0] = 'Out'
+print(W)
+
 
 # Calculate K0
 K0 = np.zeros(int(S/2))
 for q in range(int(S/2)):
     K0[q] = 2*S/3/P*(1+3*q)
 
-print(K0)
-
-K0 = [int(x) for x in np.nditer(K0) if float(x).is_integer()]
+K0 = np.min([int(x) for x in np.nditer(K0) if float(x).is_integer()])
 
 print(K0)
+
+from openpyxl import Workbook
+
+data = A.tolist()
+
+# 創建 Excel
+workbook = Workbook()
+
+# 獲取當前工作表
+worksheet = workbook.active
+
+# 添加標題行
+headers = ['Coil','Angle', 'In', 'Out']
+
+# 將標題寫入第一行
+for col, header in enumerate(headers, start=1):
+    worksheet.cell(row=1, column=col, value=header)
+
+# 將數據寫入工作表中
+for row in data:
+    worksheet.append(row)
+
+# 數據保存到文件中
+workbook.save('output.xlsx')
