@@ -1,12 +1,12 @@
 import numpy as np
 S = 15                  # Slots number
 P = 4                   # Pole number
-Phase_Num = 3           # Phase number
+Nph = 3           # Phase number
 
-Nph = int(S/Phase_Num)  # Slots per phase
+Sph = int(S/Nph)  # Slots per phase
 Span = np.floor(S/P)    # Coil span
 E_angle = 180*P/S       # Electrical angle per slot
-Ncpp = S/P/Phase_Num    # Slots per phase per pole
+Ncpp = S/P/Nph    # Slots per phase per pole
 
 # Initialization
 A = np.zeros((4,S))
@@ -38,16 +38,28 @@ for i in range(len(A[0,:])):
 A = A[:,np.argsort(np.abs(A[1]),kind='mergesort')]
 
 # Take the phase A
-A = A[:,:Nph].astype(int)
+A = A[:,:Sph].astype(int)
 
 print(A)
 
 # Winding A
-W = np.empty((S,3), dtype=object)
-W[A[2,:]-1,0] = 'In'
-W[A[3,:]-1,0] = 'Out'
-print(W)
+W = np.empty((S,Nph+1), dtype=object)
+W[:,0] = range(1,S+1)
 
+for j in range(1,Nph+1):
+    for i in A[2,:]-1:
+        if W[i,j] is None:
+            W[i,j] = "In"
+        else:
+            W[i,j] += " & In"
+
+    for i in A[3,:]-1:
+        if W[i,j] is None:
+            W[i,j] = "Out"
+        else:
+            W[i,j] += " & Out"
+
+print(W)
 
 # Calculate K0
 K0 = np.zeros(int(S/2))
