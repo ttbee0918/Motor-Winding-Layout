@@ -1,4 +1,6 @@
 import numpy as np
+
+# Initialization
 S = 15                  # Slots number
 P = 4                   # Pole number
 Nph = 3           # Phase number
@@ -8,7 +10,16 @@ Span = np.floor(S/P)    # Coil span
 E_angle = 180*P/S       # Electrical angle per slot
 Ncpp = S/P/Nph    # Slots per phase per pole
 
-# Initialization
+# Calculate K0
+K0 = np.zeros(int(S/2))
+for q in range(int(S/2)):
+    K0[q] = 2*S/3/P*(1+3*q)
+
+K0 = np.min([int(x) for x in np.nditer(K0) if float(x).is_integer()])
+
+print('K0 = ',K0)
+
+# Phase A
 A = np.zeros((4,S))
 A[0,:] = np.arange(1,S+1).reshape(-1,1).ravel()
 A[1,:] = E_angle*np.arange(0,S).reshape(-1,1).ravel()
@@ -40,12 +51,19 @@ A = A[:,np.argsort(np.abs(A[1]),kind='mergesort')]
 # Take the phase A
 A = A[:,:Sph].astype(int)
 
-print(A)
+print('Phase A',A)
 
-# Winding A
+# Phase B
+B = A[2:4,:]+K0
+B[B>S] = B[B>S]-S
+
+print('Phase B',B)
+
+# Winding
 W = np.empty((S,Nph+1), dtype=object)
 W[:,0] = range(1,S+1)
 
+# Winding A
 for j in range(1,Nph+1):
     for i in A[2,:]-1:
         if W[i,j] is None:
@@ -60,15 +78,6 @@ for j in range(1,Nph+1):
             W[i,j] += " & Out"
 
 print(W)
-
-# Calculate K0
-K0 = np.zeros(int(S/2))
-for q in range(int(S/2)):
-    K0[q] = 2*S/3/P*(1+3*q)
-
-K0 = np.min([int(x) for x in np.nditer(K0) if float(x).is_integer()])
-
-print(K0)
 
 from openpyxl import Workbook
 
