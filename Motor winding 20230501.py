@@ -1,21 +1,21 @@
 import numpy as np
 
 # Initialization
-S = 48                  # Slots number
-P = 16                   # Pole number
-Nph = 3           # Phase number
+S = 12      # Slots number
+P = 10      # Pole number
+Nph = 3     # Phase number
 
-Sph = int(S/Nph)  # Slots per phase
+Ncph = int(S/Nph)       # Slots per phase
 Span = np.floor(S/P)    # Coil span
 E_angle = 180*P/S       # Electrical angle per slot
-Ncpp = S/P/Nph    # Slots per phase per pole
+Ncpp = S/P/Nph          # Slots per phase per pole
 
 print('Nominal Coil Span =', Span)
 
 # Calculate K0
 K0 = np.zeros(int(S/2))
 for q in range(int(S/2)):
-    K0[q] = 2*S/3/P*(1+3*q)
+    K0[q] = 2*S/Nph/P*(1+Nph*q)
 print('Possible K0 =')
 print(K0)
 
@@ -55,29 +55,22 @@ A = A[:,np.argsort(A[1],kind='mergesort')]
 # Sort the abs phase offset
 A = A[:,np.argsort(np.abs(A[1]),kind='mergesort')]
 
+print('All possible coils for phase A =')
+print(A)
+
 # Take the phase A
-A = A[:,:Sph].astype(int)
+A = A[:,:Ncph].astype(int)
 
 print('Phase A =')
 print(A)
 
-# Phase B
-B = A[2:4,:]+K0
-B[B>S] = B[B>S]-S
+# Phase Matrix ABC
+ABC = np.tile(A[2:4,:], (Nph, 1))
 
-print('Phase B =')
-print(B)
-
-# Phase C
-C = B+K0
-C[C>S] = C[C>S]-S
-
-print('Phase C =')
-print(C)
-
-# Combine
-ABCIn = np.vstack([A[2,:],B[0,:],C[0,:]])
-ABCOut = np.vstack([A[3,:],B[1,:],C[1,:]])
+# Phase Matrix Arrange
+for i in range(0,Nph-1):
+    ABC[2*i+2:2*i+4,:] = ABC[2*i+0:2*i+2,:]+K0
+    ABC[ABC>S] = ABC[ABC>S]-S
 
 # Winding
 W = np.empty((S,Nph+1), dtype=object)
@@ -85,19 +78,19 @@ W[:,0] = range(1,S+1)
 
 # Winding ABC
 for j in range(1,Nph+1):
-    for i in ABCIn[j-1,:]-1:
+    for i in ABC[2*j-2,:]-1:
         if W[i,j] is None:
             W[i,j] = "In"
         else:
             W[i,j] += " & In"
 
-    for i in ABCOut[j-1,:]-1:
+    for i in ABC[2*j-1,:]-1:
         if W[i,j] is None:
             W[i,j] = "Out"
         else:
             W[i,j] += " & Out"
 
-print('Winding = ')
+print('Winding Layout = ')
 print(W)
 
 from openpyxl import Workbook
@@ -112,7 +105,7 @@ worksheet = workbook.active
 worksheet.append(['Slot',S])
 worksheet.append(['Pole',P])
 worksheet.append(['Phase number',Nph])
-worksheet.append(['Slots per phase',Sph])
+worksheet.append(['Slots per phase',Ncph])
 worksheet.append(['Coil span',Span])
 worksheet.append(['Electrical angle per slot',E_angle])
 worksheet.append(['Slots per phase per pole',Ncpp])
